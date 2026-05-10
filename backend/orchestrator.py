@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from . import edgar
 from .eodhd import fundamentals as fnd
-from .eodhd import ipos, prices, search, splits_divs
+from .eodhd import ipos, prices, search
 from .format_utils import (
     currency_symbol, first_sentence, fmt_int, fmt_money, fmt_pct, fmt_ratio,
     size_tag, take,
@@ -28,6 +28,39 @@ from .schema import (
 )
 
 log = logging.getLogger("orchestrator")
+
+
+# ============================================================ per-build fundamentals cache
+#
+# A single build run touches each fundamentals endpoint several times:
+# once during `_enrich` in `build_listings`, once at the top of
+# `build_full_detail`, and once again inside the nested `_enrich` call
+# triggered by `build_full_detail` when no `base` is supplied. That's 3
+# round-trips per symbol — enough to trigger 429s on EODHD's 1000 req/min
+# plan limit when running with parallel workers. We cache the payload (or
+# explicit `None` if the fetch fails) for the life of the build.
+#
+# `fund_cache_clear()` is called by build_static at the start of each
+# build. The api server doesn't call it; long-lived instances should
+# rely on the cache.cache layer (diskcache) for cross-request caching.
+
+_FUND_CACHE: dict[str, dict | None] = {}
+
+
+def fund_cache_clear() -> None:
+    _FUND_CACHE.clear()
+
+
+def _fetch_fundamentals_cached(symbol: str) -> dict | None:
+    if symbol in _FUND_CACHE:
+        return _FUND_CACHE[symbol]
+    try:
+        payload = fnd.fetch_fundamentals(symbol)
+    except Exception as e:
+        log.info("fundamentals miss %s: %s", symbol, e)
+        payload = None
+    _FUND_CACHE[symbol] = payload
+    return payload
 
 
 # ============================================================ list builder
@@ -46,7 +79,10 @@ def build_listings(*, from_: str | None = None,
     bare = sorted(bare, key=_listing_sort_key)
     if not bare:
         return []
-    with ThreadPoolExecutor(max_workers=16) as ex:
+    # 4 workers keeps us comfortably under EODHD's ~1000/min rate limit:
+    # ~2 calls/stock × 4 in-flight × ~5/sec = ~600/min peak. 12+ workers
+    # consistently triggered 429 storms during builds.
+    with ThreadPoolExecutor(max_workers=4) as ex:
         return list(ex.map(_enrich, bare))
 
 
@@ -92,11 +128,7 @@ def _ipo_to_newstock(row: dict) -> NewStock | None:
 
 def _enrich(stock: NewStock) -> NewStock:
     """Add fundamentals + live quote to a single listing."""
-    try:
-        payload = fnd.fetch_fundamentals(stock.symbol)
-    except Exception as e:
-        log.info("fundamentals miss %s: %s", stock.symbol, e)
-        payload = None
+    payload = _fetch_fundamentals_cached(stock.symbol)
 
     if payload:
         gen = fnd.general(payload)
@@ -173,8 +205,10 @@ def _listing_sort_key(s: NewStock) -> tuple:
 # ============================================================ detail builder
 
 def build_full_detail(symbol: str, base: NewStock | None = None) -> StockDetailFull:
-    """Build the dossier payload — runs the underlying calls in parallel."""
-    payload = fnd.fetch_fundamentals(symbol)
+    """Build the dossier payload — reuses the per-build fundamentals cache
+    so repeated calls for the same symbol cost zero extra HTTP round-trips.
+    """
+    payload = _fetch_fundamentals_cached(symbol)
 
     if base is None:
         base = _bare_from_fundamentals(symbol, payload)
@@ -438,36 +472,24 @@ def _earnings(payload: dict | None) -> tuple[list[EarningsRow], EarningsRow | No
 # ---------- splits / dividends
 
 def _splits_divs(symbol: str, payload: dict | None, currency: str) -> SplitsDivs:
+    """Splits + dividends derived only from the embedded `SplitsDividends`
+    section of the fundamentals payload. The dedicated `/api/splits/{t}`
+    and `/api/div/{t}` endpoints are NOT on the Fundamentals tier and were
+    removed to avoid 403/429 noise during builds.
+    """
     sd_block = fnd.splits_dividends(payload)
 
-    # Splits — try the dedicated endpoint first (cleaner), fall back to fundamentals payload
     splits_out: list[SplitEvent] = []
-    try:
-        for row in (splits_divs.fetch_splits(symbol) or [])[:5]:
-            d = row.get("date")
-            r = row.get("split")
-            if d and r:
-                splits_out.append(SplitEvent(date=d, ratio=str(r)))
-    except Exception:
-        pass
-    if not splits_out and isinstance(sd_block, dict) and sd_block.get("LastSplitDate"):
+    if isinstance(sd_block, dict) and sd_block.get("LastSplitDate"):
         splits_out.append(SplitEvent(
             date=sd_block["LastSplitDate"],
             ratio=str(sd_block.get("LastSplitFactor") or "—"),
         ))
 
-    # Dividends — last 8
+    # No dividend history is exposed inside fundamentals' SplitsDividends
+    # section (only forward-rate metrics live there). The dossier shows the
+    # forward-rate via Highlights → DividendYield instead.
     divs_out: list[DividendEvent] = []
-    try:
-        rows = splits_divs.fetch_dividends(symbol) or []
-        rows.sort(key=lambda r: r.get("date") or "", reverse=True)
-        for row in rows[:8]:
-            d = row.get("date")
-            v = row.get("value") or row.get("dividend") or row.get("amount")
-            if d and isinstance(v, (int, float)):
-                divs_out.append(DividendEvent(date=d, amount=float(v), currency=currency))
-    except Exception:
-        pass
 
     return SplitsDivs(splits=splits_out, dividends=divs_out)
 

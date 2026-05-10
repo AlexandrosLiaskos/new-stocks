@@ -46,14 +46,21 @@ class EODHDClient:
     # -------------------------------------------------------------- core
 
     def get(self, path: str, params: dict[str, Any] | None = None,
-            *, retries: int = 2) -> Any:
-        """GET {base}/{path}.json with auth + retry. Returns parsed JSON."""
+            *, retries: int = 3) -> Any:
+        """GET {base}/{path}.json with auth + retry. Returns parsed JSON.
+
+        Backoff strategy:
+          - 429 (rate limit): exponential 5s → 10s → 20s — gives EODHD's
+            per-second bucket time to refill.
+          - 5xx / network: shorter 0.5s → 1.0s → 1.5s.
+        """
         params = dict(params or {})
         params.setdefault("api_token", self.api_token)
         params.setdefault("fmt", "json")
         url = f"{self.base_url}/{path.lstrip('/')}"
 
         last_exc: Exception | None = None
+        last_status: int | None = None
         for attempt in range(retries + 1):
             try:
                 r = self._http.get(url, params=params)
@@ -68,6 +75,7 @@ class EODHDClient:
                     # Many endpoints return 404 for "no data" rather than 200+empty
                     return None
                 if 500 <= r.status_code < 600 or r.status_code == 429:
+                    last_status = r.status_code
                     log.warning("EODHD %s %s — retry %d/%d", r.status_code, path, attempt + 1, retries)
                     last_exc = EODHDError(f"server {r.status_code}", status=r.status_code, url=url)
                 else:
@@ -76,10 +84,14 @@ class EODHDClient:
                         status=r.status_code, url=url,
                     )
             except (httpx.ReadTimeout, httpx.ConnectTimeout, httpx.RemoteProtocolError) as e:
+                last_status = None
                 log.warning("EODHD timeout/network on %s — retry %d/%d: %s",
                             path, attempt + 1, retries, e)
                 last_exc = e
-            time.sleep(0.5 * (attempt + 1))
+
+            if attempt < retries:
+                sleep_s = 5.0 * (2 ** attempt) if last_status == 429 else 0.5 * (attempt + 1)
+                time.sleep(min(sleep_s, 30.0))
 
         if isinstance(last_exc, EODHDError):
             raise last_exc

@@ -88,14 +88,26 @@ def export_listings(window: str) -> list[dict]:
 
 # ---------------------------------------------------------------- per-symbol full
 
-def export_full_details(symbols: list[str], max_workers: int = 12) -> int:
-    """One JSON per symbol with the dossier payload."""
+def export_full_details(listings: list[dict], max_workers: int = 4) -> int:
+    """One JSON per symbol with the dossier payload.
+
+    Reuses each row's already-built NewStock as the dossier `base`, so the
+    only new HTTP call per stock is the cached fundamentals fetch (one per
+    symbol per build — see `_FUND_CACHE` in `orchestrator.py`). Rows with
+    failed enrichment in `build_listings` still get a partial dossier.
+
+    `max_workers=4` keeps us under EODHD's 1000 req/min plan limit.
+    """
+    from .schema import NewStock
+
     full_dir = DATA / "full"
     full_dir.mkdir(parents=True, exist_ok=True)
 
-    def one(sym: str) -> tuple[str, bool]:
+    def one(row: dict) -> tuple[str, bool]:
+        sym = row["symbol"]
         try:
-            d = orchestrator.build_full_detail(sym)
+            base = NewStock.model_validate(row)
+            d = orchestrator.build_full_detail(sym, base=base)
             _write_json(full_dir / f"{_safe_filename(sym)}.json", d.model_dump(mode="json"))
             return sym, True
         except Exception as e:
@@ -105,14 +117,14 @@ def export_full_details(symbols: list[str], max_workers: int = 12) -> int:
     ok = 0
     started = time.time()
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
-        futs = [ex.submit(one, s) for s in symbols]
+        futs = [ex.submit(one, r) for r in listings]
         for i, fut in enumerate(as_completed(futs), 1):
             sym, success = fut.result()
             if success:
                 ok += 1
             if i % 25 == 0:
-                log.info("full: %d/%d done (%.1fs)", i, len(symbols), time.time() - started)
-    log.info("full: %d/%d written in %.1fs", ok, len(symbols), time.time() - started)
+                log.info("full: %d/%d done (%.1fs)", i, len(listings), time.time() - started)
+    log.info("full: %d/%d written in %.1fs", ok, len(listings), time.time() - started)
     return ok
 
 
@@ -203,18 +215,18 @@ def main() -> int:
     p.add_argument("--window", default="1y", choices=list(WINDOW_DAYS.keys()))
     p.add_argument("--skip-full", action="store_true",
                    help="Skip per-symbol full dossier export (fast, but dossier is then empty).")
-    p.add_argument("--max-workers", type=int, default=12)
+    p.add_argument("--max-workers", type=int, default=4)
     args = p.parse_args()
 
     intel_db.init_db()
+    orchestrator.fund_cache_clear()   # fresh cache for each build
     _clean_data_dir()
 
     listings = export_listings(args.window)
-    syms = [s["symbol"] for s in listings]
 
     full_count = 0
-    if not args.skip_full and syms:
-        full_count = export_full_details(syms, max_workers=args.max_workers)
+    if not args.skip_full and listings:
+        full_count = export_full_details(listings, max_workers=args.max_workers)
 
     intel_count = export_intelligence()
     search_count = export_search_index(listings)
