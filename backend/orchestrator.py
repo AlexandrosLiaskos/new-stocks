@@ -151,19 +151,14 @@ def _enrich(stock: NewStock) -> NewStock:
         if gen.get("CIK"):
             stock.prospectus_url = stock.prospectus_url or edgar.prospectus_url(gen["CIK"])
 
-    # Live (delayed) quote for currently-trading tickers
-    if stock.status == "priced":
-        try:
-            quote = prices.live_quote(stock.symbol)
-            if quote:
-                if isinstance(quote.get("close"), (int, float)) and quote["close"] > 0:
-                    stock.last_price = float(quote["close"])
-                if isinstance(quote.get("previousClose"), (int, float)):
-                    stock.previous_close = float(quote["previousClose"])
-                if isinstance(quote.get("change_p"), (int, float)):
-                    stock.change_pct = float(quote["change_p"])
-        except Exception as e:
-            log.info("quote miss %s: %s", stock.symbol, e)
+    # NOTE: real-time / 15-min-delayed quotes (`/api/real-time/{t}`) are
+    # NOT reliably available on the Fundamentals Data Feed tier — they
+    # appear to track the EOD Historical Data toggle, which is OFF on the
+    # user's plan. The endpoint 403s for ~90% of fresh-IPO and SPAC-
+    # derivative tickers we encounter, so we skip the call entirely
+    # rather than spam the log. The IPO `offer_price` from the calendar
+    # already carries the price story for new listings; users follow the
+    # company website link for a live current price.
 
     stock.tags = _build_tags(stock)
     return stock

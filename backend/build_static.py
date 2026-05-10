@@ -35,6 +35,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from . import intel_db, orchestrator
+from .eodhd import news as eodhd_news
 from .schema import Region
 
 log = logging.getLogger("build_static")
@@ -133,6 +134,43 @@ def _safe_filename(symbol: str) -> str:
     return symbol.replace("/", "_").replace("\\", "_")
 
 
+# ---------------------------------------------------------------- news
+
+def export_news(listings: list[dict], max_workers: int = 4,
+                per_symbol_limit: int = 10) -> int:
+    """One JSON per symbol with the latest EODHD-curated news items.
+
+    Available on the Fundamentals Data Feed tier (News API Data toggle ON).
+    Each file contains an array of {date, title, content, link, symbols,
+    tags, sentiment} objects — frontend renders the top N in the dossier.
+    """
+    news_dir = DATA / "news"
+    news_dir.mkdir(parents=True, exist_ok=True)
+
+    def one(row: dict) -> tuple[str, int]:
+        sym = row["symbol"]
+        items = eodhd_news.fetch_news(sym, limit=per_symbol_limit)
+        if items:
+            _write_json(news_dir / f"{_safe_filename(sym)}.json", items)
+        return sym, len(items)
+
+    total_items = 0
+    written_files = 0
+    started = time.time()
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        futs = [ex.submit(one, r) for r in listings]
+        for i, fut in enumerate(as_completed(futs), 1):
+            _, n = fut.result()
+            if n > 0:
+                written_files += 1
+                total_items += n
+            if i % 50 == 0:
+                log.info("news: %d/%d done (%.1fs)", i, len(listings), time.time() - started)
+    log.info("news: %d files (%d items) written in %.1fs",
+             written_files, total_items, time.time() - started)
+    return written_files
+
+
 # ---------------------------------------------------------------- intelligence
 
 def export_intelligence() -> int:
@@ -182,7 +220,7 @@ def export_search_index(listings: list[dict]) -> int:
 # ---------------------------------------------------------------- manifest
 
 def export_manifest(*, window: str, listings_count: int, full_count: int,
-                    intel_count: int, search_count: int) -> None:
+                    intel_count: int, search_count: int, news_count: int) -> None:
     manifest = {
         "built_at": dt.datetime.now(dt.timezone.utc).isoformat(),
         "window": window,
@@ -190,6 +228,7 @@ def export_manifest(*, window: str, listings_count: int, full_count: int,
             "listings": listings_count,
             "full_details": full_count,
             "intelligence": intel_count,
+            "news_files": news_count,
             "search_entries": search_count,
         },
         "regions_known": [r.value for r in Region],
@@ -215,6 +254,8 @@ def main() -> int:
     p.add_argument("--window", default="1y", choices=list(WINDOW_DAYS.keys()))
     p.add_argument("--skip-full", action="store_true",
                    help="Skip per-symbol full dossier export (fast, but dossier is then empty).")
+    p.add_argument("--skip-news", action="store_true",
+                   help="Skip per-symbol news export.")
     p.add_argument("--max-workers", type=int, default=4)
     args = p.parse_args()
 
@@ -228,6 +269,10 @@ def main() -> int:
     if not args.skip_full and listings:
         full_count = export_full_details(listings, max_workers=args.max_workers)
 
+    news_count = 0
+    if not args.skip_news and listings:
+        news_count = export_news(listings, max_workers=args.max_workers)
+
     intel_count = export_intelligence()
     search_count = export_search_index(listings)
 
@@ -236,6 +281,7 @@ def main() -> int:
         listings_count=len(listings),
         full_count=full_count,
         intel_count=intel_count,
+        news_count=news_count,
         search_count=search_count,
     )
 

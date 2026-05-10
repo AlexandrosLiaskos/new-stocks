@@ -301,6 +301,18 @@
 }
 .dossier-tags .sep { color: var(--grey-pale); margin: 0 0.5em; }
 
+/* === news sentiment badge (used in News section + intelligence's recent_news) === */
+.news-sent {
+  display: inline-block;
+  margin-left: 0.5em;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  width: 1.2em; text-align: center;
+}
+.news-sent.pos { color: var(--tint-pos); }
+.news-sent.neg { color: var(--tint-neg); }
+
 /* === intelligence ============================================ */
 .intel-empty {
   margin: 1.6rem 0 0;

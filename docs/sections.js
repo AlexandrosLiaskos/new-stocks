@@ -282,6 +282,32 @@ NS.renderEarnings = function renderEarnings(history, next, currency) {
   return sec;
 };
 
+/* ----------------------------------------------------------------- news (EODHD-curated) */
+NS.renderNews = function renderNews(items) {
+  if (!items || items.length === 0) return null;
+  const sec = NS.sectionHead("News");
+  const ul = NS.el("ul", { class: "intel-news" });
+  for (const n of items.slice(0, 10)) {
+    const date = (n.date || "").slice(0, 10);
+    const dateNode = NS.el("span", { class: "intel-news-date", text: date });
+    const title = n.title || "(untitled)";
+    const headNode = n.link
+      ? NS.el("a", { class: "intel-news-head", href: n.link, target: "_blank", rel: "noopener", text: title })
+      : NS.el("span", { class: "intel-news-head", text: title });
+    // Sentiment polarity → small ink-tinted glyph (-1..1 scale, threshold 0.1).
+    let sentBadge = null;
+    const pol = n.sentiment && typeof n.sentiment.polarity === "number" ? n.sentiment.polarity : null;
+    if (pol !== null) {
+      const cls = pol >= 0.1 ? "pos" : (pol <= -0.1 ? "neg" : null);
+      const lbl = pol >= 0.1 ? "+" : (pol <= -0.1 ? "−" : null);
+      if (cls) sentBadge = NS.el("span", { class: "news-sent " + cls, text: lbl });
+    }
+    ul.append(NS.el("li", {}, dateNode, headNode, sentBadge));
+  }
+  sec.append(ul);
+  return sec;
+};
+
 /* ----------------------------------------------------------------- intelligence */
 NS.renderIntelligence = function renderIntelligence(intel) {
   if (!intel || !intel.symbol) return null;

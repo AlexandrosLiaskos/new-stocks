@@ -318,6 +318,7 @@
           renderDossier({ base: row, stats: [], financials: { rows: [] }, analyst: {},
                           top_holders: [], insider_recent: [], earnings_history: [],
                           next_earnings: null, splits_divs: { splits: [], dividends: [] } });
+          fetchAndRenderNews(symbol, dossierNewsAnchor());
           fetchAndRenderIntelligence(symbol, dossierIntelAnchor());
           return;
         }
@@ -325,6 +326,7 @@
       }
       const detail = await r.json();
       renderDossier(detail);
+      fetchAndRenderNews(symbol, dossierNewsAnchor());
       fetchAndRenderIntelligence(symbol, dossierIntelAnchor());
     } catch (e) {
       NS.clear(body);
@@ -333,6 +335,7 @@
   }
 
   function dossierIntelAnchor() { return $("#dossier-body .intel-anchor"); }
+  function dossierNewsAnchor() { return $("#dossier-body .news-anchor"); }
 
   function renderDossier(d) {
     const body = $("#dossier-body");
@@ -367,7 +370,8 @@
     const ea  = NS.renderEarnings(d.earnings_history, d.next_earnings, base.currency); if (ea) body.append(ea);
     const sd  = NS.renderSplitsDivs(d.splits_divs, base.currency); if (sd) body.append(sd);
 
-    body.append(NS.el("div", { class: "intel-anchor" }));   // intelligence renders here
+    body.append(NS.el("div", { class: "news-anchor" }));    // EODHD news renders here
+    body.append(NS.el("div", { class: "intel-anchor" }));   // Claude-researched intelligence renders here
 
     const actions = NS.el("div", { class: "dossier-actions" });
     if (base.prospectus_url) {
@@ -390,6 +394,17 @@
       });
       body.append(t);
     }
+  }
+
+  async function fetchAndRenderNews(symbol, anchor) {
+    if (!anchor) return;
+    try {
+      const r = await fetch(`data/news/${encodeURIComponent(symbol)}.json`, { cache: "default" });
+      if (!r.ok) return;            // silent — no news file means no news
+      const items = await r.json();
+      const sec = NS.renderNews(items);
+      if (sec) anchor.append(sec);
+    } catch { /* silent */ }
   }
 
   async function fetchAndRenderIntelligence(symbol, anchor) {
