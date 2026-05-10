@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Diskcache (runtime, regenerated on demand)
+_cache/
+backend/_cache/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Local env
+.env
+.env.local
+
+# Backups dir (zip snapshots only — keep helper scripts tracked)
+backups/*.zip

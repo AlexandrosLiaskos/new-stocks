@@ -1,0 +1,479 @@
+/* ============================================================
+   New Stocks — dossier-section styles
+   Each section reads as a printed-monograph page: tracked-uppercase
+   eyebrow ruled left & right, monospace numerical values, hairline
+   row dividers, no card chrome.
+   ============================================================ */
+
+.dossier-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink); text-align: center;
+}
+.dossier-title {
+  font-family: var(--font-serif); font-weight: 500;
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  line-height: 1.1; text-align: center;
+  margin: 0.8rem 0 0.2rem;
+}
+.dossier-title em { font-style: italic; color: var(--grey); font-weight: 400; }
+.dossier-rule {
+  border: 0; border-top: 1px solid var(--hairline);
+  width: 8rem; margin: 0.6rem auto 1.2rem;
+}
+.dossier-lede {
+  font-family: var(--font-serif); font-style: italic;
+  font-size: 1.05rem; color: var(--ink-soft);
+  text-align: center; max-width: 60ch;
+  margin: 0 auto 2rem; line-height: 1.55;
+}
+
+/* === section header pattern: rule · eyebrow · rule === */
+.section {
+  margin: 2rem 0 0;
+}
+.section-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.section-head::before,
+.section-head::after {
+  content: ""; height: 1px; background: var(--hairline);
+}
+.section-head .section-title {
+  font-family: var(--font-sans);
+  font-size: 0.7rem; font-weight: 600;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.section-sub {
+  font-family: var(--font-mono); font-size: 0.72rem;
+  letter-spacing: 0.04em; color: var(--grey);
+  text-align: center;
+  margin: -0.4rem 0 1rem;
+}
+
+/* === stat block (overview metadata) === */
+.stat-block {
+  margin: 0 0 1.6rem;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+}
+.stat-col { display: flex; flex-direction: column; }
+.stat-divider { background: var(--hairline); width: 1px; }
+.stat {
+  display: grid;
+  grid-template-columns: 12ch 1fr;
+  align-items: baseline;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px dashed var(--hairline-soft);
+}
+.stat:last-child { border-bottom: 0; }
+.stat-label {
+  font-family: var(--font-sans);
+  font-size: 0.66rem; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--grey);
+}
+.stat-value {
+  font-family: var(--font-mono); font-size: 0.9rem;
+  color: var(--ink); text-align: right;
+}
+
+/* === range pills + chart === */
+.range-row {
+  display: flex; gap: 0; justify-content: center;
+  margin: 0 auto 1rem;
+  border: 1px solid var(--ink);
+  width: fit-content;
+}
+.range-pill {
+  border: 0; border-right: 1px solid var(--ink);
+  background: var(--paper); color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 0.68rem; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 0.5rem 0.95rem;
+  transition: background 150ms ease, color 150ms ease;
+}
+.range-pill:last-child { border-right: 0; }
+.range-pill.active, .range-pill:hover {
+  background: var(--ink); color: var(--paper);
+}
+#chart {
+  width: 100%; height: 360px;
+  border: 1px solid var(--hairline);
+  margin: 0 0 1rem;
+}
+
+/* === financials capsule === */
+.fin-table {
+  width: 100%;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  border-collapse: collapse;
+  font-family: var(--font-mono); font-size: 0.85rem;
+}
+.fin-table th, .fin-table td {
+  padding: 0.5rem 0.9rem;
+  border-bottom: 1px dashed var(--hairline-soft);
+  text-align: right;
+}
+.fin-table th { color: var(--grey); font-weight: 500; }
+.fin-table tr:last-child td, .fin-table tr:last-child th { border-bottom: 0; }
+.fin-table .fin-label {
+  text-align: left; color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 0.7rem; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+}
+.fin-foot {
+  font-family: var(--font-mono); font-size: 0.72rem;
+  color: var(--grey); margin-top: 0.4rem; text-align: right;
+}
+
+/* === analyst consensus === */
+.analyst-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem 2rem;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+}
+.analyst-cell {
+  display: flex; flex-direction: column; gap: 0.15rem;
+}
+.analyst-label {
+  font-family: var(--font-sans);
+  font-size: 0.66rem; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--grey);
+}
+.analyst-value {
+  font-family: var(--font-mono); font-size: 1.4rem;
+  color: var(--ink);
+}
+.analyst-value-suffix {
+  font-family: var(--font-mono); font-size: 0.85rem;
+  color: var(--grey); margin-left: 0.4em;
+}
+.analyst-bar {
+  display: grid;
+  grid-template-columns: var(--sb,0fr) var(--b,0fr) var(--h,0fr) var(--s,0fr) var(--ss,0fr);
+  height: 12px;
+  border: 1px solid var(--hairline);
+  margin: 0.4rem 0 0.4rem;
+}
+.analyst-bar > span {
+  border-right: 1px solid var(--hairline);
+}
+.analyst-bar > span:last-child { border-right: 0; }
+.analyst-bar .ab-sb { background: var(--ink); }
+.analyst-bar .ab-b  { background: var(--ink-soft); }
+.analyst-bar .ab-h  { background: var(--grey); }
+.analyst-bar .ab-s  { background: var(--grey-soft); }
+.analyst-bar .ab-ss { background: var(--grey-pale); }
+
+.analyst-legend {
+  font-family: var(--font-sans);
+  font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--grey);
+}
+.analyst-legend .sep { color: var(--grey-pale); margin: 0 0.4em; }
+.analyst-legend .num { font-family: var(--font-mono); color: var(--ink); }
+
+/* === holders === */
+.holders-table {
+  width: 100%;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  border-collapse: collapse;
+}
+.holders-table td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px dashed var(--hairline-soft);
+  vertical-align: baseline;
+}
+.holders-table tr:last-child td { border-bottom: 0; }
+.holders-table .h-rank { font-family: var(--font-mono); color: var(--grey); width: 2.2rem; text-align: right; }
+.holders-table .h-name { font-family: var(--font-serif); color: var(--ink); }
+.holders-table .h-pct,
+.holders-table .h-chg { font-family: var(--font-mono); text-align: right; white-space: nowrap; }
+.h-chg.pos { color: var(--tint-pos); }
+.h-chg.neg { color: var(--tint-neg); }
+
+/* === insider trades === */
+.insider-table {
+  width: 100%;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  border-collapse: collapse;
+  font-family: var(--font-mono); font-size: 0.82rem;
+}
+.insider-table td {
+  padding: 0.4rem 0.7rem;
+  border-bottom: 1px dashed var(--hairline-soft);
+}
+.insider-table tr:last-child td { border-bottom: 0; }
+.insider-table .ins-side {
+  font-family: var(--font-sans);
+  font-size: 0.66rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+}
+.ins-side.buy { color: var(--tint-pos); }
+.ins-side.sell { color: var(--tint-neg); }
+.insider-table .ins-name { font-family: var(--font-serif); color: var(--ink); }
+
+/* === earnings === */
+.earnings-table {
+  width: 100%;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  border-collapse: collapse;
+}
+.earnings-table th, .earnings-table td {
+  padding: 0.4rem 0.8rem;
+  border-bottom: 1px dashed var(--hairline-soft);
+  font-family: var(--font-mono); font-size: 0.85rem;
+  text-align: right;
+}
+.earnings-table th { color: var(--grey); font-weight: 500; text-align: right; }
+.earnings-table tr:last-child td, .earnings-table tr:last-child th { border-bottom: 0; }
+.earnings-table .e-period { text-align: left; }
+.surprise.pos { color: var(--tint-pos); }
+.surprise.neg { color: var(--tint-neg); }
+.next-earnings {
+  margin-top: 0.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink); text-align: center;
+}
+.next-earnings .ne-date {
+  font-family: var(--font-mono); font-size: 0.95rem;
+  letter-spacing: 0.04em; text-transform: none;
+  display: inline-block; margin-left: 0.7em;
+}
+
+/* === splits & dividends === */
+.sd-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0 2rem;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  padding: 0.6rem 0;
+}
+.sd-col h4 {
+  font-family: var(--font-sans);
+  font-size: 0.66rem; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--grey); margin: 0 0 0.4rem; padding: 0 1rem;
+}
+.sd-row {
+  display: grid; grid-template-columns: auto 1fr auto;
+  gap: 0.6rem;
+  padding: 0.3rem 1rem;
+  font-family: var(--font-mono); font-size: 0.82rem;
+  border-bottom: 1px dashed var(--hairline-soft);
+}
+.sd-row:last-child { border-bottom: 0; }
+.sd-row .sd-date { color: var(--grey); }
+.sd-row .sd-amt { color: var(--ink); text-align: right; }
+
+/* === dossier actions === */
+.dossier-actions {
+  display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+  margin-top: 1.6rem;
+}
+.dossier-tags {
+  margin-top: 1.4rem;
+  font-family: var(--font-sans);
+  font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--grey); text-align: center;
+}
+.dossier-tags .sep { color: var(--grey-pale); margin: 0 0.5em; }
+
+/* === intelligence ============================================ */
+.intel-empty {
+  margin: 1.6rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--hairline-soft);
+  text-align: center;
+}
+.intel-empty-line {
+  font-family: var(--font-serif); font-style: italic;
+  font-size: 0.95rem; color: var(--grey); margin: 0;
+}
+
+.intel-note {
+  font-family: var(--font-mono);
+  font-size: 0.72rem; color: var(--grey);
+  margin: 0 0 0.8rem; text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.intel-lede {
+  font-family: var(--font-serif); font-style: italic;
+  font-size: 1.05rem; color: var(--ink);
+  text-align: center; max-width: 60ch;
+  margin: 0.4rem auto 1.4rem; line-height: 1.55;
+}
+
+.intel-h {
+  font-family: var(--font-sans);
+  font-size: 0.7rem; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink);
+  margin: 1.4rem 0 0.5rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--hairline-soft);
+}
+
+.intel-block {
+  display: grid;
+  grid-template-columns: 14ch 1fr;
+  gap: 0.4rem 1rem;
+  margin: 0 0 1rem;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+.intel-block dt {
+  font-family: var(--font-sans);
+  font-size: 0.66rem; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--grey);
+  margin: 0; padding-top: 0.15rem;
+}
+.intel-block dd {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 0.98rem; color: var(--ink);
+  line-height: 1.5;
+}
+
+.intel-list {
+  list-style: none; margin: 0; padding: 0;
+}
+.intel-list li {
+  font-family: var(--font-serif); font-size: 0.98rem;
+  color: var(--ink-soft);
+  padding: 0.3rem 0 0.3rem 1.2rem;
+  position: relative;
+  line-height: 1.5;
+  border-bottom: 1px dashed var(--hairline-soft);
+}
+.intel-list li:last-child { border-bottom: 0; }
+.intel-list li::before {
+  content: "·";
+  position: absolute; left: 0.3rem;
+  color: var(--grey); font-weight: 700;
+}
+
+.intel-comp-name {
+  font-family: var(--font-serif); font-style: italic;
+  color: var(--ink);
+}
+.intel-comp-note { color: var(--grey); }
+
+.intel-people li { padding-left: 0; padding: 0.5rem 0; }
+.intel-people .intel-person-name {
+  font-family: var(--font-serif); font-style: italic;
+  color: var(--ink); font-size: 1rem;
+}
+.intel-people .intel-person-role {
+  font-family: var(--font-sans);
+  font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--grey);
+}
+.intel-people .intel-person-bio {
+  font-family: var(--font-serif);
+  font-size: 0.92rem; color: var(--ink-soft);
+  margin-top: 0.15rem;
+}
+.intel-people li::before { content: ""; }
+
+.intel-quad {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  margin: 1rem 0;
+}
+.intel-quad-cell {
+  background: var(--paper);
+  padding: 0.8rem 1rem;
+}
+.intel-quad-title {
+  font-family: var(--font-sans);
+  font-size: 0.66rem; font-weight: 600;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--grey);
+  margin-bottom: 0.45rem;
+}
+.intel-bull .intel-quad-title { color: var(--tint-pos); }
+.intel-bear .intel-quad-title { color: var(--tint-neg); }
+.intel-red  .intel-quad-title { color: var(--tint-neg); }
+.intel-cat  .intel-quad-title { color: var(--ink); }
+.intel-quad-empty {
+  font-family: var(--font-serif); font-style: italic;
+  color: var(--grey-soft); font-size: 0.95rem;
+}
+
+.intel-news {
+  list-style: none; margin: 0; padding: 0;
+}
+.intel-news li {
+  padding: 0.4rem 0;
+  border-bottom: 1px dashed var(--hairline-soft);
+  font-family: var(--font-serif); font-size: 0.95rem;
+  line-height: 1.5;
+}
+.intel-news li:last-child { border-bottom: 0; }
+.intel-news .intel-news-date {
+  font-family: var(--font-mono); font-size: 0.78rem;
+  color: var(--grey); margin-right: 0.7em;
+  white-space: nowrap;
+}
+.intel-news .intel-news-head { color: var(--ink); }
+.intel-news .intel-news-source {
+  font-family: var(--font-sans);
+  font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--grey);
+}
+
+.intel-sources {
+  list-style: none; margin: 0; padding: 0;
+  font-family: var(--font-mono); font-size: 0.78rem;
+}
+.intel-sources li {
+  padding: 0.2rem 0;
+  border-bottom: 1px dashed var(--hairline-soft);
+}
+.intel-sources li:last-child { border-bottom: 0; }
+.intel-sources a { color: var(--ink-soft); }
+
+/* ---------- Mobile section reflows ---------- */
+@media (max-width: 640px) {
+  .stat-block { grid-template-columns: 1fr; }
+  .stat-divider { display: none; }
+  .stat-col + .stat-col .stat:first-child {
+    border-top: 1px dashed var(--hairline-soft);
+  }
+  .analyst-grid { grid-template-columns: 1fr; }
+  .sd-grid { grid-template-columns: 1fr; }
+  .fin-table, .earnings-table, .insider-table, .holders-table { font-size: 0.78rem; }
+  #chart { height: 260px; }
+  .intel-quad { grid-template-columns: 1fr; }
+  .intel-block { grid-template-columns: 1fr; gap: 0.05rem 0; }
+  .intel-block dt { padding-top: 0.5rem; }
+}

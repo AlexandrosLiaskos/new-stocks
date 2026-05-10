@@ -1,0 +1,79 @@
+name: Build & deploy
+
+# Triggers:
+#  - push to main      → rebuild + redeploy on every code change
+#  - schedule (daily)  → fetch fresh EODHD data + rebuild
+#  - workflow_dispatch → manual run from the Actions tab
+on:
+  push:
+    branches: [main]
+  schedule:
+    # 03:30 UTC daily. Adjust to taste.
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+    inputs:
+      window:
+        description: "Listing window to bake"
+        required: false
+        default: "1y"
+        type: choice
+        options: ["30d", "90d", "6m", "1y", "all"]
+
+permissions:
+  contents: write       # needed to commit docs/data back to the repo
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build static site
+        env:
+          EODHD_API_KEY: ${{ secrets.EODHD_API_KEY }}
+        run: |
+          python -m backend.build_static --window "${{ inputs.window || '1y' }}"
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data _intelligence.db
+          if git diff --cached --quiet; then
+            echo "no data changes to commit"
+          else
+            git commit -m "data: rebuild $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push
+          fi
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main           # pull the freshly-committed docs/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deployment
+        uses: actions/deploy-pages@v4

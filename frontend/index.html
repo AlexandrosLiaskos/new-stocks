@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>New Stocks</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Italianno&display=swap" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/styles-sections.css" />
+</head>
+<body>
+  <main class="page">
+    <header class="masthead">
+      <div class="eyebrow">New Listings · Global</div>
+      <h1 class="title">New <em>Stocks</em></h1>
+      <hr class="hairline" />
+      <p class="lede">
+        A daily feed of IPOs, direct listings, and the pipeline of upcoming
+        listings worldwide. Click any row for a full dossier; type a ticker
+        anywhere to look it up.
+      </p>
+
+      <div class="masthead-actions">
+        <button id="refresh-btn" class="btn-solid" type="button">
+          <span class="btn-glyph">&#x21bb;</span> Refresh
+        </button>
+        <div class="search-shell">
+          <input id="search-input" class="search-input" type="search"
+                 placeholder="search any ticker…" autocomplete="off" />
+          <div id="search-results" class="search-results" hidden></div>
+        </div>
+        <div id="list-counter" class="list-counter" aria-live="polite"></div>
+      </div>
+
+      <div class="filter-row" data-group="period">
+        <label class="filter-pill"><input type="radio" name="period" data-period="7d" /><span class="pill-label">7 days</span></label>
+        <label class="filter-pill"><input type="radio" name="period" data-period="30d" checked /><span class="pill-label">30 days</span></label>
+        <label class="filter-pill"><input type="radio" name="period" data-period="90d" /><span class="pill-label">90 days</span></label>
+        <label class="filter-pill"><input type="radio" name="period" data-period="6m" /><span class="pill-label">6 months</span></label>
+        <label class="filter-pill"><input type="radio" name="period" data-period="1y" /><span class="pill-label">1 year</span></label>
+        <label class="filter-pill"><input type="radio" name="period" data-period="all" /><span class="pill-label">All</span></label>
+      </div>
+      <div class="filter-row" data-group="status">
+        <label class="filter-pill"><input type="checkbox" data-status="priced" checked /><span class="pill-label">Priced</span><span class="pill-count" data-pill-count></span></label>
+        <label class="filter-pill"><input type="checkbox" data-status="upcoming" checked /><span class="pill-label">Upcoming</span><span class="pill-count" data-pill-count></span></label>
+        <label class="filter-pill"><input type="checkbox" data-status="filed" /><span class="pill-label">Filed</span><span class="pill-count" data-pill-count></span></label>
+      </div>
+      <div class="filter-row" data-group="region">
+        <label class="filter-pill"><input type="checkbox" data-region="US" checked /><span class="pill-label">US</span><span class="pill-count" data-pill-count></span></label>
+        <label class="filter-pill"><input type="checkbox" data-region="UK" checked /><span class="pill-label">UK</span><span class="pill-count" data-pill-count></span></label>
+        <label class="filter-pill"><input type="checkbox" data-region="EU" checked /><span class="pill-label">EU</span><span class="pill-count" data-pill-count></span></label>
+        <label class="filter-pill"><input type="checkbox" data-region="ASIA" checked /><span class="pill-label">Asia</span><span class="pill-count" data-pill-count></span></label>
+        <label class="filter-pill"><input type="checkbox" data-region="INDIA" checked /><span class="pill-label">India</span><span class="pill-count" data-pill-count></span></label>
+        <label class="filter-pill"><input type="checkbox" data-region="OCEANIA" checked /><span class="pill-label">Oceania</span><span class="pill-count" data-pill-count></span></label>
+        <label class="filter-pill"><input type="checkbox" data-region="LATAM" checked /><span class="pill-label">LatAm</span><span class="pill-count" data-pill-count></span></label>
+        <label class="filter-pill"><input type="checkbox" data-region="AFRICA" checked /><span class="pill-label">Africa/ME</span><span class="pill-count" data-pill-count></span></label>
+        <label class="filter-pill"><input type="checkbox" data-region="OTHER" checked /><span class="pill-label">Other</span><span class="pill-count" data-pill-count></span></label>
+      </div>
+    </header>
+
+    <section id="list" class="list" aria-live="polite"></section>
+
+    <footer class="footer">
+      <hr class="hairline" />
+      <p class="footer-text">
+        Data &middot; <em>EODHD Fundamentals API</em> &middot; supplementary prospectus links via <em>SEC EDGAR</em>
+      </p>
+    </footer>
+  </main>
+
+  <div id="dossier" class="dossier" hidden>
+    <div class="dossier-inner" role="dialog" aria-modal="true" aria-labelledby="dossier-title">
+      <button class="dossier-close" type="button" aria-label="Close">&times;</button>
+      <div id="dossier-body"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="/sections.js"></script>
+  <script src="/search.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
