@@ -72,6 +72,11 @@ jobs:
         with:
           ref: main           # pull the freshly-committed docs/
       - uses: actions/configure-pages@v5
+        with:
+          # Auto-enable Pages on this repo if it isn't already.
+          # Lets the first workflow run bring the site up without a
+          # manual click through Settings → Pages.
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs
