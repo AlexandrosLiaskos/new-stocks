@@ -21,8 +21,8 @@ docs/                      ← served by GitHub Pages
 ## How it stays fresh
 
 1. **EODHD Fundamentals API** (€59.99/mo) provides the global IPO calendar + per-stock fundamentals.
-2. **`/research-stocks`** Claude Code slash command researches each stock (web search + fetch) and writes structured records into `_intelligence.db` (SQLite).
-3. **`python -m backend.build_static`** reads EODHD live + the SQLite database and writes the JSON snapshot into `docs/data/`.
+2. **`/research-stocks`** Claude Code slash command researches each stock (web search + fetch) and writes a structured record to `intelligence/{SYMBOL}.json` — one file per stock, committed to git.
+3. **`python -m backend.build_static`** reads EODHD live + the `intelligence/` directory and writes the JSON snapshot into `docs/data/`. The build never touches `intelligence/` — research is independent of the IPO-calendar refresh.
 4. **GitHub Actions** (`.github/workflows/deploy.yml`) runs the build daily and pushes the refreshed snapshot. GitHub Pages serves it.
 
 ## One-time GitHub Pages setup
@@ -64,7 +64,7 @@ backend/
 ├── orchestrator.py       turns EODHD payloads into typed view models
 ├── schema.py             pydantic models (NewStock, StockDetailFull, ...)
 ├── intel_schema.py       StockIntelligence model
-├── intel_db.py           SQLite read/write helpers
+├── intel_store.py        Filesystem-backed read/write (one JSON per symbol)
 ├── intel_write.py        CLI used by Claude Code to upsert records
 ├── cache.py              diskcache TTL wrapper (used in dev)
 ├── capabilities.py       runtime EOD-availability probe (dev only)
@@ -74,10 +74,12 @@ backend/
 └── eodhd/                typed EODHD client + per-endpoint modules
 
 docs/                     GitHub Pages root (committed)
+intelligence/             one JSON per stock — source of truth for research,
+                          committed to git, copied into docs/data/intelligence/
+                          at build time
 frontend/                 dev-only legacy frontend (drives the FastAPI app)
 .claude/commands/research-stocks.md   slash command for Claude Code
 .github/workflows/deploy.yml          daily build + deploy
-_intelligence.db          SQLite — committed so the build is reproducible
 ```
 
 ## Daily workflow (manual)
@@ -91,7 +93,7 @@ _intelligence.db          SQLite — committed so the build is reproducible
 python -m backend.build_static --window 1y
 
 # 4. Commit + push:
-git add _intelligence.db docs/
+git add intelligence/ docs/
 git commit -m "data: refresh $(date -u +%Y-%m-%d)"
 git push
 ```

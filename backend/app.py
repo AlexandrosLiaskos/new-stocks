@@ -19,7 +19,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import intel_db, orchestrator
+from . import orchestrator
+from . import intel_store as intel_db   # filesystem-backed; same public API as the old SQLite module
 from .cache import (
     TTL_EXCHANGES, TTL_FULL, TTL_HISTORY_FROZEN, TTL_HISTORY_LIVE, TTL_LIST,
     TTL_SEARCH, bust, cached,

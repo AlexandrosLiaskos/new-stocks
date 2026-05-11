@@ -1,10 +1,10 @@
 ---
-description: Research stocks listed in the New Stocks app and persist structured intelligence to the SQLite database.
+description: Research stocks listed in the New Stocks app and persist structured intelligence as JSON files.
 ---
 
-# /research-stocks — fill the stock-intelligence database
+# /research-stocks — fill the stock-intelligence store
 
-You are running the daily intelligence research workflow for the **New Stocks** app. Your job is to research stocks that appear in the app's IPO feed and write structured records into `backend/_intelligence.db` so the dossier UI can display them.
+You are running the daily intelligence research workflow for the **New Stocks** app. Your job is to research stocks that appear in the app's IPO feed and write structured records into the `intelligence/` directory (one JSON file per stock, committed to git) so the dossier UI can display them.
 
 ## How to run
 

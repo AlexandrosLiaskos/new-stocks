@@ -40,17 +40,39 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Build static site
+      - name: Verify EODHD_API_KEY is set
         env:
           EODHD_API_KEY: ${{ secrets.EODHD_API_KEY }}
         run: |
+          if [ -z "$EODHD_API_KEY" ]; then
+            echo "::warning::EODHD_API_KEY secret is not set — skipping data rebuild. Add the secret at Settings → Secrets → Actions."
+            echo "SKIP_REBUILD=1" >> $GITHUB_ENV
+          fi
+
+      - name: Build static site
+        if: env.SKIP_REBUILD != '1'
+        env:
+          EODHD_API_KEY: ${{ secrets.EODHD_API_KEY }}
+        # exit 2 = EODHD auth failed mid-build; we keep previous data.
+        # exit 0 = success. Any other non-zero is a real failure.
+        run: |
+          set +e
           python -m backend.build_static --window "${{ inputs.window || '1y' }}"
+          rc=$?
+          if [ $rc -eq 2 ]; then
+            echo "::warning::EODHD auth failed during build — listings/full/news preserved from previous run."
+            echo "SKIP_REBUILD=1" >> $GITHUB_ENV
+          elif [ $rc -ne 0 ]; then
+            echo "::error::Build failed with exit $rc"
+            exit $rc
+          fi
 
       - name: Commit refreshed data
+        if: env.SKIP_REBUILD != '1'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/data _intelligence.db
+          git add docs/data intelligence
           if git diff --cached --quiet; then
             echo "no data changes to commit"
           else

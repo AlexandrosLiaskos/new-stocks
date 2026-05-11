@@ -20,8 +20,8 @@ import sys
 
 from pydantic import ValidationError
 
-from .intel_db import upsert
 from .intel_schema import StockIntelligence
+from .intel_store import upsert
 
 
 def _load_payload(file: str | None) -> dict:
