@@ -339,6 +339,24 @@
   margin: 0.4rem auto 1.4rem; line-height: 1.55;
 }
 
+.intel-website {
+  text-align: center;
+  margin: 0.6rem 0 1.2rem;
+}
+.intel-website a {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 0.05em;
+  letter-spacing: 0.01em;
+}
+.intel-website a:hover {
+  color: var(--grey);
+  border-bottom-color: var(--grey);
+}
+
 .intel-h {
   font-family: var(--font-sans);
   font-size: 0.7rem; font-weight: 600;

@@ -130,7 +130,7 @@
     setCounts('.filter-row[data-group="period"] .filter-pill', "period", byPeriod);
     const intelPill = $('.filter-row[data-group="intel"] .filter-pill');
     if (intelPill) {
-      const n = allStocks.reduce((acc, s) => acc + (s.intel ? 1 : 0), 0);
+      const n = allStocks.reduce((acc, s) => acc + (s.website ? 1 : 0), 0);
       intelPill.querySelector("[data-pill-count]").textContent = String(n);
       intelPill.dataset.empty = n === 0 ? "1" : "0";
     }
@@ -168,7 +168,7 @@
       statusSet.has(s.status) &&
       regionSet.has(s.region || "OTHER") &&
       withinPeriod(s, period) &&
-      (!onlyIntel || s.intel)
+      (!onlyIntel || !!s.website)
     );
     updateListCounter(items.length);
     if (items.length === 0) {
@@ -185,11 +185,23 @@
       ? NS.el("img", { class: "row-logo", src: s.logo_url, alt: "", loading: "lazy" })
       : NS.el("span", { class: "row-logo--blank" });
 
-    const name = NS.el("div", { class: "row-name" },
+    const nameChildren = [
       s.name,
       NS.el("span", { class: "row-symbol", text: s.symbol }),
-      s.intel ? NS.el("span", { class: "row-intel-chip", title: "Structured intelligence available", text: "intel" }) : null,
-    );
+    ];
+    if (s.website) {
+      const host = s.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/.*$/, "");
+      nameChildren.push(NS.el("a", {
+        class: "row-site",
+        href: s.website,
+        target: "_blank",
+        rel: "noopener",
+        title: "Open " + host,
+        text: host + " ↗",
+        onclick: (e) => e.stopPropagation(),  // don't also open the dossier
+      }));
+    }
+    const name = NS.el("div", { class: "row-name" }, ...nameChildren);
 
     const priceTxt = NS.fmtPrice(s.last_price ?? s.offer_price, s.currency)
       || (s.price_low && s.price_high ? `${NS.cursym(s.currency)}${s.price_low}–${s.price_high}` : "—");

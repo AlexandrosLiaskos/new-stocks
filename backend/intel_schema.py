@@ -41,6 +41,12 @@ class StockIntelligence(BaseModel):
     name: Optional[str] = None
     researched_at: datetime
 
+    # THE ONE FIELD THAT REALLY MATTERS: the company's official site.
+    # The hourly routine populates this and (optionally) `sources`; everything
+    # else below is legacy from the richer-intelligence schema and stays
+    # blank for newly-researched stocks.
+    website: Optional[str] = None                # https://... corporate domain
+
     # WHAT THEY DO
     one_liner: Optional[str] = None              # ≤ 200 chars
     business_model: Optional[str] = None         # 2-3 sentences
@@ -79,6 +85,7 @@ class StockIntelligence(BaseModel):
 # ---- friendly label map for the frontend (kept here so backend + frontend agree)
 
 FIELD_LABELS: dict[str, str] = {
+    "website": "Website",
     "one_liner": "One-liner",
     "business_model": "Business model",
     "products_services": "Products & services",

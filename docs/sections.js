@@ -311,12 +311,30 @@ NS.renderNews = function renderNews(items) {
 /* ----------------------------------------------------------------- intelligence */
 NS.renderIntelligence = function renderIntelligence(intel) {
   if (!intel || !intel.symbol) return null;
+
+  // Detect the website-only minimal record (the common case under the new routine).
+  const websiteOnly = !!intel.website && !intel.one_liner && !intel.business_model
+    && !(intel.products_services || []).length && !(intel.competitors || []).length
+    && !(intel.bull_points || []).length && !(intel.bear_points || []).length
+    && !intel.founded && !intel.headquarters && !intel.employees
+    && !(intel.key_people || []).length;
+
   const sec = NS.sectionHead(
-    "Intelligence",
-    intel.researched_at
+    "Business",
+    !websiteOnly && intel.researched_at
       ? `Researched ${(intel.researched_at || "").slice(0, 10)} · confidence ${intel.confidence || "low"}`
       : null,
   );
+
+  // Prominent website link — works for both the minimal record and the rich one.
+  if (intel.website) {
+    sec.append(NS.el("p", { class: "intel-website" },
+      NS.el("a", {
+        href: intel.website, target: "_blank", rel: "noopener",
+        text: intel.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "") + " ↗",
+      }),
+    ));
+  }
 
   if (intel.confidence_note) {
     sec.append(NS.el("p", { class: "intel-note", text: intel.confidence_note }));

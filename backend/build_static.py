@@ -115,10 +115,18 @@ def export_listings(window: str) -> list[dict]:
     items = [s.model_dump(mode="json") for s in rows]
     intel_syms = set(intel_db.list_symbols())
     for it in items:
-        it["intel"] = it["symbol"] in intel_syms
+        sym = it["symbol"]
+        if sym in intel_syms:
+            it["intel"] = True
+            rec = intel_db.get(sym) or {}
+            if rec.get("website"):
+                it["website"] = rec["website"]
+        else:
+            it["intel"] = False
     _write_json(DATA / "listings.json", items)
     n_intel = sum(1 for it in items if it["intel"])
-    log.info("listings: %d rows written (%d with intel)", len(items), n_intel)
+    n_site = sum(1 for it in items if it.get("website"))
+    log.info("listings: %d rows written (%d with intel, %d with website)", len(items), n_intel, n_site)
     return items
 
 
