@@ -8,13 +8,15 @@ You are running the daily intelligence research workflow for the **New Stocks** 
 
 ## How to run
 
-1. **Get the work list.** The backend exposes the symbols that need research:
+1. **Get the work list.** Prefer the server-free file diff (works in headless / scheduled runs):
    ```bash
-   curl -s "http://127.0.0.1:8765/api/intelligence/missing?period=30d&max_age_days=7&limit=20"
+   python -m backend.list_missing --max-age-days 7
    ```
-   This returns up to 20 symbols whose intelligence record is missing or older than 7 days. Each entry includes `symbol`, `name`, `country`, `sector`, `industry`, `web_url`, `prospectus_url`, and a one-sentence `description` — use these as the starting point.
+   It diffs `docs/data/listings.json` (committed daily by GH Actions) against the local `intelligence/` dir and emits a JSON array of stale/missing symbols, newest IPO first. Each entry includes `symbol`, `name`, `country`, `sector`, `industry`, `web_url`, `prospectus_url`, and a one-sentence `description`.
 
-   If the server is not running, start it: `uvicorn backend.app:app --port 8765` (set `EODHD_API_KEY` first). Pick a smaller `limit` if you want to bound this run; pick a larger one for catch-up runs.
+   Process **every symbol returned** by default — the user wants daily coverage of whatever the API surfaced. If the list is very long (>50), still work newest-first and note in the closing summary how many remain unresearched.
+
+   Dev-mode fallback only (if the static listings file is absent and `uvicorn` is already running): `curl -s "http://127.0.0.1:8765/api/intelligence/missing?period=30d&max_age_days=7&limit=20"`.
 
 2. **For each symbol**, do real research. Use the tools available to you:
    - **WebSearch** — search "{name} {ticker} business model", "{name} competitors", "{name} IPO prospectus", "{name} latest news", etc.
@@ -32,6 +34,16 @@ You are running the daily intelligence research workflow for the **New Stocks** 
    The CLI validates against the pydantic schema and upserts. Non-zero exit means validation failed — read the stderr, fix the JSON, retry.
 
 5. After finishing the batch, briefly summarise: how many records you wrote, average confidence, anything notable (e.g. "5 of 20 had no English-language coverage — marked low-confidence").
+
+6. **Commit + push** so the daily GH Actions build redeploys the new dossiers:
+   ```bash
+   git add intelligence/
+   if ! git diff --cached --quiet; then
+     git commit -m "intel: research $(date -u +%Y-%m-%d) — N stocks"
+     git push
+   fi
+   ```
+   Replace `N` with the actual count. Skip if nothing was written.
 
 ## Schema (matches `backend/intel_schema.py::StockIntelligence`)
 
