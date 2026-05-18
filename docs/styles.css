@@ -240,6 +240,18 @@ button { font-family: inherit; cursor: pointer; }
   font-family: var(--font-mono); font-size: 0.82rem;
   color: var(--grey); margin-left: 0.6em; letter-spacing: 0.04em;
 }
+.row-intel-chip {
+  display: inline-block;
+  margin-left: 0.7em;
+  padding: 0.05em 0.5em;
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  vertical-align: 0.18em;
+}
 
 .row-price {
   grid-column: 3;

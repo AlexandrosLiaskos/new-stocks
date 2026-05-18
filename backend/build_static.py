@@ -113,8 +113,12 @@ def export_listings(window: str) -> list[dict]:
         log.warning("listings: EODHD fetch failed (%s) — writing empty listings", e)
         rows = []
     items = [s.model_dump(mode="json") for s in rows]
+    intel_syms = set(intel_db.list_symbols())
+    for it in items:
+        it["intel"] = it["symbol"] in intel_syms
     _write_json(DATA / "listings.json", items)
-    log.info("listings: %d rows written", len(items))
+    n_intel = sum(1 for it in items if it["intel"])
+    log.info("listings: %d rows written (%d with intel)", len(items), n_intel)
     return items
 
 
@@ -231,6 +235,7 @@ def export_intelligence() -> int:
 def export_search_index(listings: list[dict]) -> int:
     """Lightweight, client-side filterable. Includes listing rows + symbols
     that have an intelligence record but aren't in the current listings."""
+    intel_syms = set(intel_db.list_symbols())
     by_sym: dict[str, dict] = {}
     for s in listings:
         by_sym[s["symbol"]] = {
@@ -240,8 +245,9 @@ def export_search_index(listings: list[dict]) -> int:
             "country": s.get("country"),
             "type": s.get("status"),
             "currency": s.get("currency"),
+            "intel": s["symbol"] in intel_syms,
         }
-    for sym in intel_db.list_symbols():
+    for sym in intel_syms:
         if sym not in by_sym:
             rec = intel_db.get(sym) or {}
             by_sym[sym] = {
@@ -251,6 +257,7 @@ def export_search_index(listings: list[dict]) -> int:
                 "country": None,
                 "type": "researched",
                 "currency": None,
+                "intel": True,
             }
     items = list(by_sym.values())
     _write_json(DATA / "search.json", items)

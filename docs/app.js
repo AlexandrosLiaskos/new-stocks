@@ -35,7 +35,7 @@
         currentPeriod = activePeriod();
         renderList();
       }));
-    $$('.filter-row[data-group="status"] input, .filter-row[data-group="region"] input')
+    $$('.filter-row[data-group="status"] input, .filter-row[data-group="region"] input, .filter-row[data-group="intel"] input')
       .forEach(inp => inp.addEventListener("change", renderList));
 
     $(".dossier-close").addEventListener("click", closeDossier);
@@ -95,6 +95,10 @@
     return $$('.filter-row[data-group="region"] input:checked').map(i => i.dataset.region);
   }
 
+  function intelOnly() {
+    return !!$('.filter-row[data-group="intel"] input:checked');
+  }
+
   /* Period filter is now pure date math on the loaded listings. */
   function withinPeriod(s, period) {
     const days = PERIOD_DAYS[period];
@@ -124,6 +128,12 @@
     setCounts('.filter-row[data-group="status"] .filter-pill', "status", byStatus);
     setCounts('.filter-row[data-group="region"] .filter-pill', "region", byRegion);
     setCounts('.filter-row[data-group="period"] .filter-pill', "period", byPeriod);
+    const intelPill = $('.filter-row[data-group="intel"] .filter-pill');
+    if (intelPill) {
+      const n = allStocks.reduce((acc, s) => acc + (s.intel ? 1 : 0), 0);
+      intelPill.querySelector("[data-pill-count]").textContent = String(n);
+      intelPill.dataset.empty = n === 0 ? "1" : "0";
+    }
   }
 
   function setCounts(selector, key, map) {
@@ -153,10 +163,12 @@
     const statusSet = new Set(activeStatuses());
     const regionSet = new Set(activeRegions());
     const period = activePeriod();
+    const onlyIntel = intelOnly();
     const items = allStocks.filter(s =>
       statusSet.has(s.status) &&
       regionSet.has(s.region || "OTHER") &&
-      withinPeriod(s, period)
+      withinPeriod(s, period) &&
+      (!onlyIntel || s.intel)
     );
     updateListCounter(items.length);
     if (items.length === 0) {
@@ -176,6 +188,7 @@
     const name = NS.el("div", { class: "row-name" },
       s.name,
       NS.el("span", { class: "row-symbol", text: s.symbol }),
+      s.intel ? NS.el("span", { class: "row-intel-chip", title: "Structured intelligence available", text: "intel" }) : null,
     );
 
     const priceTxt = NS.fmtPrice(s.last_price ?? s.offer_price, s.currency)
